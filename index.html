@@ -58,8 +58,8 @@
 
     <!-- Main Container -->
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-4xl border border-gray-200">
-        <!-- School Logo -->
-        <img src="School_Logo.png" alt="School Logo" class="mx-auto mb-4 w-24 h-24 rounded-full shadow-md">
+        <!-- School Logo (Fallback added to prevent broken image icon) -->
+        <img src="School_Logo.png" onerror="this.src='https://via.placeholder.com/96?text=Logo'" alt="School Logo" class="mx-auto mb-4 w-24 h-24 rounded-full shadow-md object-cover">
 
         <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Schola De San Jose</h1>
 
@@ -86,7 +86,7 @@
                     Login
                 </button>
                 <p class="mt-4 text-center text-gray-600">
-                    Don't have an account? <a href="#" onclick="showRegistrationForm()" class="text-blue-600 hover:underline">Register here</a>
+                    Don't have an account? <button onclick="showRegistrationForm()" class="text-blue-600 hover:underline">Register here</button>
                 </p>
             </div>
 
@@ -126,14 +126,14 @@
                     Register
                 </button>
                 <p class="mt-4 text-center text-gray-600">
-                    Already have an account? <a href="#" onclick="showLoginForm()" class="text-blue-600 hover:underline">Login here</a>
+                    Already have an account? <button onclick="showLoginForm()" class="text-blue-600 hover:underline">Login here</button>
                 </p>
             </div>
         </div>
 
         <!-- Dashboard Section (Hidden by default) -->
         <div id="dashboardSection" class="hidden">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <h2 id="dashboardTitle" class="text-2xl font-bold text-gray-800">Welcome, User!</h2>
                 <button onclick="logoutUser()"
                         class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition duration-200 text-sm">
@@ -144,7 +144,7 @@
             <!-- Dashboard Tabs -->
             <div class="flex border-b border-gray-200 mb-6">
                 <button id="gradesTabBtn" onclick="showDashboardTab('grades')"
-                        class="py-2 px-4 text-center text-lg font-medium text-gray-600 hover:text-blue-600 focus:outline-none border-b-2 border-transparent hover:border-blue-500 active:border-blue-600 transition duration-200">
+                        class="py-2 px-4 text-center text-lg font-medium text-gray-600 hover:text-blue-600 focus:outline-none border-b-2 border-transparent hover:border-blue-500 active:border-blue-600 transition duration-200 text-blue-600 border-blue-500">
                     Grades
                 </button>
                 <button id="attendanceTabBtn" onclick="showDashboardTab('attendance')"
@@ -184,7 +184,7 @@
                 </div>
 
                 <!-- Teacher-only: All Grades Table -->
-                <div id="allGradesDisplay" class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div id="allGradesDisplay" class="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hidden">
                     <h4 class="text-lg font-semibold text-gray-700 mb-3">All Grades (Teacher View)</h4>
                     <div class="overflow-x-auto">
                         <table class="min-w-full bg-white rounded-lg shadow-md">
@@ -273,7 +273,7 @@
                 </div>
 
                 <!-- Teacher-only: All Attendance Table -->
-                <div id="allAttendanceDisplay" class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div id="allAttendanceDisplay" class="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hidden">
                     <h4 class="text-lg font-semibold text-gray-700 mb-3">All Attendance (Teacher View)</h4>
                     <div class="overflow-x-auto">
                         <table class="min-w-full bg-white rounded-lg shadow-md">
@@ -317,21 +317,12 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Clear All Users Button (for admin/testing) -->
-            <div class="mt-8 text-center">
-                 <button onclick="clearAllUsers()"
-                    class="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200 text-sm font-semibold">
-                    Clear All Users (Admin/Testing)
-                </button>
-            </div>
         </div>
     </div>
 
     <script>
         // --- Local Storage Keys ---
         const USERS_STORAGE_KEY = 'schoolPortalUsers';
-        const STUDENTS_DATA_KEY = 'schoolPortalStudentsData'; // Stores student names and IDs
         const GRADES_STORAGE_KEY = 'schoolPortalGrades';
         const ATTENDANCE_STORAGE_KEY = 'schoolPortalAttendance';
 
@@ -390,7 +381,7 @@
             const day = String(today.getDate()).padStart(2, '0');
             attendanceDateInput.value = `${year}-${month}-${day}`;
 
-            // Check if user is already logged in (e.g., from a previous session)
+            // Check if user is already logged in
             const storedUser = localStorage.getItem('currentUser');
             if (storedUser) {
                 currentUser = JSON.parse(storedUser);
@@ -401,11 +392,6 @@
         };
 
         // --- Utility Functions ---
-        /**
-         * Displays a notification message at the top of the screen.
-         * @param {string} message - The message to display.
-         * @param {string} type - The type of message ('success', 'error', 'info').
-         */
         function showMessage(message, type) {
             messageBox.textContent = message;
             messageBox.className = `message-box show ${type}`;
@@ -419,44 +405,76 @@
             }, 3000);
         }
 
-        /**
-         * Shows a confirmation prompt using window.prompt for critical actions.
-         * @param {string} message - The message to show in the prompt.
-         * @param {string} expectedConfirmation - The exact string the user must type to confirm.
-         * @returns {Promise<boolean>} Resolves to true if confirmed, false otherwise.
-         */
-        function confirmAction(message, expectedConfirmation) {
-            return new Promise((resolve) => {
-                showMessage(message, 'info');
-                setTimeout(() => {
-                    const confirmation = window.prompt(`Type '${expectedConfirmation}' to confirm:`, "");
-                    resolve(confirmation === expectedConfirmation);
-                }, 100);
-            });
+        // --- UI State Management ---
+        function showLoginForm() {
+            authSection.classList.remove('hidden');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            dashboardSection.classList.add('hidden');
         }
 
-        // --- User Authentication & Session Management ---
-        /**
-         * Retrieves all registered users from local storage.
-         * @returns {Array<Object>} An array of user objects.
-         */
+        function showRegistrationForm() {
+            authSection.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            dashboardSection.classList.add('hidden');
+        }
+
+        function showDashboard() {
+            authSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            dashboardTitle.textContent = `Welcome, ${currentUser.name}!`;
+
+            if (currentUser.role === 'teacher') {
+                teacherGradesInput.classList.remove('hidden');
+                allGradesDisplay.classList.remove('hidden');
+                myGradesDisplay.classList.add('hidden');
+
+                teacherAttendanceInput.classList.remove('hidden');
+                allAttendanceDisplay.classList.remove('hidden');
+                myAttendanceDisplay.classList.add('hidden');
+
+                loadAllGrades();
+                loadAllAttendance();
+            } else {
+                teacherGradesInput.classList.add('hidden');
+                allGradesDisplay.classList.add('hidden');
+                myGradesDisplay.classList.remove('hidden');
+
+                teacherAttendanceInput.classList.add('hidden');
+                allAttendanceDisplay.classList.add('hidden');
+                myAttendanceDisplay.classList.remove('hidden');
+
+                loadStudentGrades();
+                loadStudentAttendance();
+            }
+        }
+
+        function showDashboardTab(tabName) {
+            if (tabName === 'grades') {
+                gradesTabContent.classList.add('active');
+                attendanceTabContent.classList.remove('active');
+                gradesTabBtn.classList.add('text-blue-600', 'border-blue-500');
+                attendanceTabBtn.classList.remove('text-blue-600', 'border-blue-500');
+            } else {
+                gradesTabContent.classList.remove('active');
+                attendanceTabContent.classList.add('active');
+                attendanceTabBtn.classList.add('text-blue-600', 'border-blue-500');
+                gradesTabBtn.classList.remove('text-blue-600', 'border-blue-500');
+            }
+        }
+
+        // --- User Authentication & Management ---
         function getUsers() {
             const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
             return usersJson ? JSON.parse(usersJson) : [];
         }
 
-        /**
-         * Saves user data to local storage.
-         * @param {Array<Object>} users - The array of user objects to save.
-         */
         function saveUsers(users) {
             localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
         }
 
-        /**
-         * Handles user registration.
-         */
-        async function registerUser() {
+        function registerUser() {
             const username = regUsernameInput.value.trim();
             const password = regPasswordInput.value.trim();
             const name = regNameInput.value.trim();
@@ -465,10 +483,6 @@
 
             if (!username || !password || !name || !id) {
                 showMessage('Please fill in all registration fields.', 'error');
-                return;
-            }
-            if (id.length < 3 || id.length > 10) {
-                showMessage('ID must be between 3 and 10 characters.', 'error');
                 return;
             }
 
@@ -482,23 +496,18 @@
                 return;
             }
 
-            // For simplicity, passwords are stored in plain text.
-            // In a real application, ALWAYS hash passwords (e.g., using bcrypt).
             users.push({ username, password, name, id, role });
             saveUsers(users);
             showMessage('Registration successful! You can now login.', 'success');
+            
             regUsernameInput.value = '';
             regPasswordInput.value = '';
             regNameInput.value = '';
             regIdInput.value = '';
-            regRoleSelect.value = 'student'; // Reset dropdown
-            showLoginForm(); // Redirect to login form
+            showLoginForm();
         }
 
-        /**
-         * Handles user login.
-         */
-        async function loginUser() {
+        function loginUser() {
             const username = loginUsernameInput.value.trim();
             const password = loginPasswordInput.value.trim();
 
@@ -508,12 +517,12 @@
             }
 
             const users = getUsers();
-            const foundUser = users.find(u => u.username === username && u.password === password); // Plain text check
+            const foundUser = users.find(u => u.username === username && u.password === password);
 
             if (foundUser) {
                 currentUser = foundUser;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Store session
-                showMessage(`Welcome, ${currentUser.name}! You are logged in as a ${currentUser.role}.`, 'success');
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMessage(`Welcome, ${currentUser.name}!`, 'success');
                 loginUsernameInput.value = '';
                 loginPasswordInput.value = '';
                 showDashboard();
@@ -522,477 +531,191 @@
             }
         }
 
-        /**
-         * Logs out the current user.
-         */
         function logoutUser() {
-            localStorage.removeItem('currentUser'); // Clear session
+            localStorage.removeItem('currentUser');
             currentUser = null;
             showMessage('You have been logged out.', 'info');
             showLoginForm();
         }
 
-        /**
-         * Clears all user accounts (admin/testing functionality).
-         */
-        async function clearAllUsers() {
-            const confirmed = await confirmAction('This will delete ALL registered user accounts. Are you sure?', 'CLEAR');
-            if (confirmed) {
-                localStorage.removeItem(USERS_STORAGE_KEY);
-                localStorage.removeItem(STUDENTS_DATA_KEY); // Clear associated student data
-                localStorage.removeItem(GRADES_STORAGE_KEY); // Clear associated grades
-                localStorage.removeItem(ATTENDANCE_STORAGE_KEY); // Clear associated attendance
-                showMessage('All user accounts and associated data cleared.', 'success');
-                logoutUser(); // Force logout
-            }
+        // --- Grades Functionality ---
+        function getGrades() {
+            return JSON.parse(localStorage.getItem(GRADES_STORAGE_KEY) || '[]');
         }
 
-        // --- UI Visibility Functions ---
-        function showLoginForm() {
-            authSection.classList.remove('hidden');
-            loginForm.classList.remove('hidden');
-            registerForm.classList.add('hidden');
-            dashboardSection.classList.add('hidden');
+        function saveGrades(grades) {
+            localStorage.setItem(GRADES_STORAGE_KEY, JSON.stringify(grades));
         }
 
-        function showRegistrationForm() {
-            authSection.classList.remove('hidden');
-            registerForm.classList.remove('hidden');
-            loginForm.classList.add('hidden');
-            dashboardSection.classList.add('hidden');
-        }
-
-        function showDashboard() {
-            authSection.classList.add('hidden');
-            dashboardSection.classList.remove('hidden');
-            dashboardTitle.textContent = `Welcome, ${currentUser.name}!`;
-
-            // Adjust dashboard content based on user role
-            if (currentUser.role === 'teacher') {
-                teacherGradesInput.classList.remove('hidden');
-                allGradesDisplay.classList.remove('hidden');
-                myGradesDisplay.classList.add('hidden'); // Hide student view
-                teacherAttendanceInput.classList.remove('hidden');
-                allAttendanceDisplay.classList.remove('hidden');
-                myAttendanceDisplay.classList.add('hidden'); // Hide student view
-            } else { // Student
-                teacherGradesInput.classList.add('hidden');
-                allGradesDisplay.classList.add('hidden');
-                myGradesDisplay.classList.remove('hidden'); // Show student view
-                teacherAttendanceInput.classList.add('hidden');
-                allAttendanceDisplay.classList.add('hidden');
-                myAttendanceDisplay.classList.remove('hidden'); // Show student view
-            }
-
-            // Ensure grades tab is active by default on dashboard entry
-            showDashboardTab('grades');
-        }
-
-        function showDashboardTab(tabName) {
-            // Deactivate all tabs and contents
-            gradesTabBtn.classList.remove('border-blue-600', 'text-blue-600');
-            attendanceTabBtn.classList.remove('border-blue-600', 'text-blue-600');
-            gradesTabContent.classList.remove('active');
-            attendanceTabContent.classList.remove('active');
-
-            // Activate selected tab and content
-            if (tabName === 'grades') {
-                gradesTabBtn.classList.add('border-blue-600', 'text-blue-600');
-                gradesTabContent.classList.add('active');
-                if (currentUser.role === 'teacher') {
-                    displayAllGrades();
-                } else {
-                    displayMyGrades(currentUser.id);
-                }
-            } else if (tabName === 'attendance') {
-                attendanceTabBtn.classList.add('border-blue-600', 'text-blue-600');
-                attendanceTabContent.classList.add('active');
-                if (currentUser.role === 'teacher') {
-                    displayAllAttendance();
-                } else {
-                    displayMyAttendance(currentUser.id);
-                }
-            }
-        }
-
-        // --- Student Data (Name lookup for grades/attendance) ---
-        /**
-         * Retrieves student name data (separate from user accounts).
-         * @returns {Array<Object>} An array of student objects ({ id, name }).
-         */
-        function getStudentsData() {
-            const studentsJson = localStorage.getItem(STUDENTS_DATA_KEY);
-            return studentsJson ? JSON.parse(studentsJson) : [];
-        }
-
-        /**
-         * Saves student name data.
-         * @param {Array<Object>} students - The array of student objects to save.
-         */
-        function saveStudentsData(students) {
-            localStorage.setItem(STUDENTS_DATA_KEY, JSON.stringify(students));
-        }
-
-        /**
-         * Registers a student (name and ID) for grade/attendance tracking.
-         * This is a teacher-only function.
-         */
-        async function registerStudentForTracking() {
-            // We'll reuse the regIdInput and regNameInput for this if the user is a teacher registering students.
-            // Or, we can add dedicated inputs in the teacher dashboard if it's more appropriate.
-            // For now, let's assume teacher adds students via their own account registration,
-            // or we need a separate "Manage Students" section.
-
-            // Since the current registration form registers accounts (users),
-            // and those users can be students, we'll primarily use the 'id' and 'name'
-            // from the registered user for grades/attendance.
-            // If a teacher needs to add *unregistered* students (for attendance/grades only),
-            // we'd need a dedicated form for that.
-            // For this version, assume students who get grades/attendance logged
-            // are also registered users.
-            showMessage('Student profiles are created via the "Register" section, or if you are logged in as a teacher, you can manage specific student IDs within the grade/attendance sections.', 'info');
-        }
-
-
-        // --- Grades Management ---
-        /**
-         * Retrieves grade records.
-         * @returns {Array<Object>} An array of grade objects ({ studentId, subject, grade }).
-         */
-        function getGradesRecords() {
-            const recordsJson = localStorage.getItem(GRADES_STORAGE_KEY);
-            return recordsJson ? JSON.parse(recordsJson) : [];
-        }
-
-        /**
-         * Saves grade records.
-         * @param {Array<Object>} records - The array of grade objects to save.
-         */
-        function saveGradesRecords(records) {
-            localStorage.setItem(GRADES_STORAGE_KEY, JSON.stringify(records));
-        }
-
-        /**
-         * Submits or updates a student's grade (Teacher function).
-         */
-        async function submitGrade() {
+        function submitGrade() {
             const studentId = gradeStudentIdInput.value.trim().toUpperCase();
             const subject = subjectInput.value.trim();
-            const grade = parseInt(gradeInput.value);
+            const grade = parseInt(gradeInput.value, 10);
 
             if (!studentId || !subject || isNaN(grade)) {
-                showMessage('Please fill in Student ID, Subject, and a valid Grade.', 'error');
-                return;
-            }
-            if (studentId.length < 3 || studentId.length > 10) {
-                showMessage('Student ID must be between 3 and 10 characters.', 'error');
-                return;
-            }
-            if (grade < 0 || grade > 100) {
-                showMessage('Grade must be between 0 and 100.', 'error');
+                showMessage('Please fill in all grade fields correctly.', 'error');
                 return;
             }
 
-            const registeredUsers = getUsers();
-            const isStudentRegistered = registeredUsers.some(u => u.id === studentId && u.role === 'student');
-            if (!isStudentRegistered) {
-                showMessage('Student ID not registered as a student. Please register the student first.', 'error');
+            const users = getUsers();
+            const student = users.find(u => u.id === studentId && u.role === 'student');
+
+            if (!student) {
+                showMessage('Student ID not found.', 'error');
                 return;
             }
 
-            let grades = getGradesRecords();
-            const existingIndex = grades.findIndex(record =>
-                record.studentId === studentId && record.subject.toLowerCase() === subject.toLowerCase()
-            );
-
-            if (existingIndex > -1) {
-                grades[existingIndex].grade = grade;
-                showMessage(`Grade for ${studentId} in ${subject} updated to ${grade}.`, 'success');
-            } else {
-                grades.push({ studentId, subject, grade });
-                showMessage(`Grade ${grade} submitted for ${studentId} in ${subject}.`, 'success');
-            }
-
-            saveGradesRecords(grades);
-            displayAllGrades();
+            const grades = getGrades();
+            grades.push({ studentId, studentName: student.name, subject, grade });
+            saveGrades(grades);
+            
             gradeStudentIdInput.value = '';
             subjectInput.value = '';
             gradeInput.value = '';
+            showMessage('Grade submitted successfully.', 'success');
+            loadAllGrades();
         }
 
-        /**
-         * Displays all grade records (Teacher view).
-         */
-        function displayAllGrades() {
-            const grades = getGradesRecords();
-            const users = getUsers(); // Get all users to map student IDs to names
-            allGradesTableBody.innerHTML = '';
-
-            if (grades.length === 0) {
-                allGradesTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No grades recorded yet.</td></tr>`;
-                return;
-            }
-
-            grades.sort((a, b) => {
-                if (a.studentId < b.studentId) return -1;
-                if (a.studentId > b.studentId) return 1;
-                if (a.subject.toLowerCase() < b.subject.toLowerCase()) return -1;
-                if (a.subject.toLowerCase() > b.subject.toLowerCase()) return 1;
-                return 0;
-            });
-
-            grades.forEach((record, index) => {
-                const row = allGradesTableBody.insertRow();
-                row.className = 'border-b border-gray-200 hover:bg-gray-100';
-
-                const studentName = users.find(u => u.id === record.studentId && u.role === 'student')?.name || 'N/A';
-
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left whitespace-nowrap">${record.studentId}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left whitespace-nowrap">${studentName}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left">${record.subject}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left">${record.grade}</td>`;
-
-                const actionsCell = row.insertCell();
-                actionsCell.className = 'py-3 px-6 text-center';
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.className = 'bg-red-500 text-white text-xs py-1 px-3 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400';
-                deleteButton.onclick = () => deleteGrade(index);
-                actionsCell.appendChild(deleteButton);
-            });
-        }
-
-        /**
-         * Displays grades for the logged-in student (Student view).
-         * @param {string} studentId - The ID of the logged-in student.
-         */
-        function displayMyGrades(studentId) {
-            studentGradesTableBody.innerHTML = '';
-            const allGrades = getGradesRecords();
-            const myGrades = allGrades.filter(record => record.studentId === studentId);
-
-            if (myGrades.length === 0) {
-                studentGradesTableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">No grades recorded for you yet.</td></tr>`;
-                return;
-            }
-
-            myGrades.forEach(record => {
-                const row = studentGradesTableBody.insertRow();
-                row.className = 'border-b border-gray-200 hover:bg-gray-100';
-
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left">${record.subject}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left font-semibold">${record.grade}</td>`;
-
-                const remarksCell = row.insertCell();
-                remarksCell.className = 'py-3 px-6 text-left italic';
-                if (record.grade >= 90) {
-                    remarksCell.textContent = 'Excellent!';
-                    remarksCell.classList.add('text-green-600');
-                } else if (record.grade >= 80) {
-                    remarksCell.textContent = 'Very Good!';
-                    remarksCell.classList.add('text-blue-600');
-                } else if (record.grade >= 75) {
-                    remarksCell.textContent = 'Good.';
-                    remarksCell.classList.add('text-purple-600');
-                } else if (record.grade >= 70) {
-                    remarksCell.textContent = 'Satisfactory.';
-                    remarksCell.classList.add('text-orange-600');
-                } else {
-                    remarksCell.textContent = 'Needs Improvement.';
-                    remarksCell.classList.add('text-red-600');
-                }
-            });
-        }
-
-        /**
-         * Deletes a specific grade record (Teacher function).
-         * @param {number} index - The index of the record to delete.
-         */
-        async function deleteGrade(index) {
-            const confirmed = await confirmAction('Are you sure you want to delete this grade record?', 'DELETE');
-            if (confirmed) {
-                let grades = getGradesRecords();
-                if (index >= 0 && index < grades.length) {
-                    grades.splice(index, 1);
-                    saveGradesRecords(grades);
-                    displayAllGrades();
-                    showMessage('Grade record deleted.', 'success');
-                } else {
-                    showMessage('Error: Record not found for deletion.', 'error');
-                }
-            } else {
-                showMessage('Deletion cancelled.', 'info');
+        function loadAllGrades() {
+            const grades = getGrades();
+            allGradesTableBody.innerHTML = grades.map((g, index) => `
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left whitespace-nowrap">${g.studentId}</td>
+                    <td class="py-3 px-6 text-left">${g.studentName}</td>
+                    <td class="py-3 px-6 text-left">${g.subject}</td>
+                    <td class="py-3 px-6 text-left">${g.grade}</td>
+                    <td class="py-3 px-6 text-center">
+                        <button onclick="deleteGrade(${index})" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+            if(grades.length === 0) {
+                allGradesTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No grades recorded yet.</td></tr>`;
             }
         }
 
-        /**
-         * Clears all grade records (Teacher function).
-         */
-        async function clearAllGrades() {
-            const confirmed = await confirmAction('This will clear ALL grade records. Are you sure?', 'CLEAR');
-            if (confirmed) {
+        function loadStudentGrades() {
+            const grades = getGrades().filter(g => g.studentId === currentUser.id);
+            studentGradesTableBody.innerHTML = grades.map(g => `
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left whitespace-nowrap">${g.subject}</td>
+                    <td class="py-3 px-6 text-left font-bold ${g.grade >= 75 ? 'text-green-600' : 'text-red-600'}">${g.grade}</td>
+                    <td class="py-3 px-6 text-left">${g.grade >= 75 ? 'Passed' : 'Failed'}</td>
+                </tr>
+            `).join('');
+            if(grades.length === 0) {
+                studentGradesTableBody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-gray-500">No grades available.</td></tr>`;
+            }
+        }
+
+        function deleteGrade(index) {
+            const grades = getGrades();
+            grades.splice(index, 1);
+            saveGrades(grades);
+            loadAllGrades();
+            showMessage('Grade record deleted.', 'info');
+        }
+
+        function clearAllGrades() {
+            if (confirm("Are you sure you want to clear all grade records?")) {
                 localStorage.removeItem(GRADES_STORAGE_KEY);
-                displayAllGrades();
-                showMessage('All grade records have been cleared.', 'success');
+                loadAllGrades();
+                showMessage('All grades cleared.', 'info');
             }
         }
 
-
-        // --- Attendance Management ---
-        /**
-         * Retrieves attendance records.
-         * @returns {Array<Object>} An array of attendance objects ({ studentId, date, status }).
-         */
-        function getAttendanceRecords() {
-            const recordsJson = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
-            return recordsJson ? JSON.parse(recordsJson) : [];
+        // --- Attendance Functionality ---
+        function getAttendance() {
+            return JSON.parse(localStorage.getItem(ATTENDANCE_STORAGE_KEY) || '[]');
         }
 
-        /**
-         * Saves attendance records.
-         * @param {Array<Object>} records - The array of attendance objects to save.
-         */
-        function saveAttendanceRecords(records) {
+        function saveAttendance(records) {
             localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(records));
         }
 
-        /**
-         * Marks attendance for a student (Teacher function).
-         */
-        async function markAttendance() {
+        function markAttendance() {
             const studentId = attendanceStudentIdInput.value.trim().toUpperCase();
             const date = attendanceDateInput.value;
             const status = document.querySelector('input[name="attendanceStatus"]:checked').value;
 
-            if (!studentId || !date || !status) {
-                showMessage('Please fill in all attendance fields.', 'error');
-                return;
-            }
-            if (studentId.length < 3 || studentId.length > 10) {
-                showMessage('Student ID must be between 3 and 10 characters.', 'error');
+            if (!studentId || !date) {
+                showMessage('Please fill in student ID and date.', 'error');
                 return;
             }
 
-            const registeredUsers = getUsers();
-            const isStudentRegistered = registeredUsers.some(u => u.id === studentId && u.role === 'student');
-            if (!isStudentRegistered) {
-                showMessage('Student ID not registered as a student. Please register the student first.', 'error');
+            const users = getUsers();
+            const student = users.find(u => u.id === studentId && u.role === 'student');
+
+            if (!student) {
+                showMessage('Student ID not found.', 'error');
                 return;
             }
 
-            let records = getAttendanceRecords();
-            const existingIndex = records.findIndex(record =>
-                record.studentId === studentId && record.date === date
-            );
-
+            const records = getAttendance();
+            // Check if record already exists for date to update rather than add duplicate
+            const existingIndex = records.findIndex(r => r.studentId === studentId && r.date === date);
+            
             if (existingIndex > -1) {
                 records[existingIndex].status = status;
-                showMessage(`Attendance for ${studentId} on ${date} updated to ${status}.`, 'success');
+                showMessage('Attendance updated.', 'success');
             } else {
-                records.push({ studentId, date, status });
-                showMessage(`Attendance marked for ${studentId} as ${status} on ${date}.`, 'success');
+                records.push({ studentId, studentName: student.name, date, status });
+                showMessage('Attendance recorded.', 'success');
             }
-
-            saveAttendanceRecords(records);
-            displayAllAttendance();
+            
+            saveAttendance(records);
             attendanceStudentIdInput.value = '';
+            loadAllAttendance();
         }
 
-        /**
-         * Displays all attendance records (Teacher view).
-         */
-        function displayAllAttendance() {
-            const records = getAttendanceRecords();
-            const users = getUsers(); // Get all users to map student IDs to names
-            allAttendanceTableBody.innerHTML = '';
-
-            if (records.length === 0) {
-                allAttendanceTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No attendance records found.</td></tr>`;
-                return;
-            }
-
-            records.sort((a, b) => {
-                if (a.studentId < b.studentId) return -1;
-                if (a.studentId > b.studentId) return 1;
-                if (a.date < b.date) return -1;
-                if (a.date > b.date) return 1;
-                return 0;
-            });
-
-            records.forEach((record, index) => {
-                const row = allAttendanceTableBody.insertRow();
-                row.className = 'border-b border-gray-200 hover:bg-gray-100';
-
-                const studentName = users.find(u => u.id === record.studentId && u.role === 'student')?.name || 'N/A';
-
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left whitespace-nowrap">${record.studentId}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left whitespace-nowrap">${studentName}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left">${record.date}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left">${record.status}</td>`;
-
-                const actionsCell = row.insertCell();
-                actionsCell.className = 'py-3 px-6 text-center';
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.className = 'bg-red-500 text-white text-xs py-1 px-3 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400';
-                deleteButton.onclick = () => deleteAttendance(index);
-                actionsCell.appendChild(deleteButton);
-            });
-        }
-
-        /**
-         * Displays attendance for the logged-in student (Student view).
-         * @param {string} studentId - The ID of the logged-in student.
-         */
-        function displayMyAttendance(studentId) {
-            studentAttendanceTableBody.innerHTML = '';
-            const allRecords = getAttendanceRecords();
-            const myRecords = allRecords.filter(record => record.studentId === studentId);
-
-            if (myRecords.length === 0) {
-                studentAttendanceTableBody.innerHTML = `<tr><td colspan="2" class="text-center py-4 text-gray-500">No attendance records for you yet.</td></tr>`;
-                return;
-            }
-
-            myRecords.forEach(record => {
-                const row = studentAttendanceTableBody.insertRow();
-                row.className = 'border-b border-gray-200 hover:bg-gray-100';
-
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left">${record.date}</td>`;
-                row.insertCell().outerHTML = `<td class="py-3 px-6 text-left font-semibold">${record.status}</td>`;
-            });
-        }
-
-        /**
-         * Deletes a specific attendance record (Teacher function).
-         * @param {number} index - The index of the record to delete.
-         */
-        async function deleteAttendance(index) {
-            const confirmed = await confirmAction('Are you sure you want to delete this attendance record?', 'DELETE');
-            if (confirmed) {
-                let records = getAttendanceRecords();
-                if (index >= 0 && index < records.length) {
-                    records.splice(index, 1);
-                    saveAttendanceRecords(records);
-                    displayAllAttendance();
-                    showMessage('Attendance record deleted.', 'success');
-                } else {
-                    showMessage('Error: Record not found for deletion.', 'error');
-                }
-            } else {
-                showMessage('Deletion cancelled.', 'info');
+        function loadAllAttendance() {
+            const records = getAttendance();
+            allAttendanceTableBody.innerHTML = records.map((r, index) => {
+                let statusColor = r.status === 'Present' ? 'text-green-600' : (r.status === 'Absent' ? 'text-red-600' : 'text-yellow-600');
+                return `
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left whitespace-nowrap">${r.studentId}</td>
+                    <td class="py-3 px-6 text-left">${r.studentName}</td>
+                    <td class="py-3 px-6 text-left">${r.date}</td>
+                    <td class="py-3 px-6 text-left font-semibold ${statusColor}">${r.status}</td>
+                    <td class="py-3 px-6 text-center">
+                        <button onclick="deleteAttendance(${index})" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
+                    </td>
+                </tr>
+            `}).join('');
+            if(records.length === 0) {
+                allAttendanceTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">No attendance recorded yet.</td></tr>`;
             }
         }
 
-        /**
-         * Clears all attendance records (Teacher function).
-         */
-        async function clearAllAttendance() {
-            const confirmed = await confirmAction('This will clear ALL attendance records. Are you sure?', 'CLEAR');
-            if (confirmed) {
+        function loadStudentAttendance() {
+            const records = getAttendance().filter(r => r.studentId === currentUser.id);
+            studentAttendanceTableBody.innerHTML = records.map(r => {
+                let statusColor = r.status === 'Present' ? 'text-green-600' : (r.status === 'Absent' ? 'text-red-600' : 'text-yellow-600');
+                return `
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left whitespace-nowrap">${r.date}</td>
+                    <td class="py-3 px-6 text-left font-semibold ${statusColor}">${r.status}</td>
+                </tr>
+            `}).join('');
+            if(records.length === 0) {
+                studentAttendanceTableBody.innerHTML = `<tr><td colspan="2" class="py-4 text-center text-gray-500">No attendance records available.</td></tr>`;
+            }
+        }
+
+        function deleteAttendance(index) {
+            const records = getAttendance();
+            records.splice(index, 1);
+            saveAttendance(records);
+            loadAllAttendance();
+            showMessage('Attendance record deleted.', 'info');
+        }
+
+        function clearAllAttendance() {
+            if (confirm("Are you sure you want to clear all attendance records?")) {
                 localStorage.removeItem(ATTENDANCE_STORAGE_KEY);
-                displayAllAttendance();
-                showMessage('All attendance records have been cleared.', 'success');
+                loadAllAttendance();
+                showMessage('All attendance cleared.', 'info');
             }
         }
     </script>
